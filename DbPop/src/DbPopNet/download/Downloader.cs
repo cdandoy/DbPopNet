@@ -3,17 +3,17 @@ using System.Data.Common;
 using System.Data.SqlClient;
 using System.Globalization;
 using CsvHelper;
-using DbPop.DbPopNet.Database;
+using DbPop.DbPopNet.Db;
 
 namespace DbPop.DbPopNet.download;
 
 public class Downloader : IDisposable
 {
     private const int MaxLength = 1024 * 32;
-    private readonly Database.Database _database;
+    private readonly Database _database;
     private readonly DirectoryInfo _directory;
 
-    public Downloader(Database.Database database, DirectoryInfo directory, string dataset)
+    public Downloader(Database database, DirectoryInfo directory, string dataset)
     {
         _database = database;
         _directory = directory.CreateSubdirectory(dataset);
@@ -24,7 +24,7 @@ public class Downloader : IDisposable
         _database.Dispose();
     }
 
-    public Database.Database GetDatabase()
+    public Database GetDatabase()
     {
         return _database;
     }

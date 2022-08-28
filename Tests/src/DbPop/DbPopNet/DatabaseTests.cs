@@ -1,6 +1,6 @@
 ﻿using System.Data.SqlClient;
 using DbPop.DbPopNet;
-using DbPop.DbPopNet.Database;
+using DbPop.DbPopNet.Db;
 using static System.Diagnostics.Debug;
 
 namespace Tests.DbPop.DbPopNet;
@@ -8,7 +8,7 @@ namespace Tests.DbPop.DbPopNet;
 public class DatabaseTests
 {
     [Test]
-    public void Test1()
+    public void TestDatabase()
     {
         var env = Env.CreateEnv().GetEnvironment("mssql");
         var connectionString = env.GetString("connectionString");

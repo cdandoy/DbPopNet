@@ -2,9 +2,9 @@
 using System.Data.SqlClient;
 using System.Text;
 using System.Text.RegularExpressions;
-using DbPop.DbPopNet.Database.MsSql;
+using DbPop.DbPopNet.Db.MsSql;
 
-namespace DbPop.DbPopNet.Database;
+namespace DbPop.DbPopNet.Db;
 
 public abstract class Database : IDisposable
 {
@@ -78,6 +78,11 @@ public abstract class Database : IDisposable
 
     public abstract List<TableName> GetTableNames(string catalog);
     public abstract List<TableName> GetTableNames(string catalog, string schema);
+
+    public List<Table> Tables(ISet<TableName> tableNames)
+    {
+        throw new NotImplementedException();
+    }
 }
 
 public class DatabaseMetaData

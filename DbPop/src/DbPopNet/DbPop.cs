@@ -1,6 +1,6 @@
 using System.CommandLine;
 using System.Data.SqlClient;
-using DbPop.DbPopNet.Database;
+using DbPop.DbPopNet.Db;
 using DbPop.DbPopNet.download;
 
 namespace DbPop.DbPopNet;
@@ -57,7 +57,7 @@ internal static class DbPop
         {
             using var sqlConnection = CreateConnection(environmentValue, connectionStringValue, usernameValue, passwordValue);
             using var downloader = new Downloader(
-                Database.Database.CreateDatabase(sqlConnection),
+                Database.CreateDatabase(sqlConnection),
                 directoryValue ?? new DirectoryInfo("./output"),
                 datasetValue
             );
@@ -94,7 +94,7 @@ internal static class DbPop
         return command;
     }
 
-    private static SqlConnection CreateConnection(string? environment, string? connectionString, string? username, string? password)
+    public static SqlConnection CreateConnection(string? environment, string? connectionString, string? username, string? password)
     {
         var env = Env.GetEnvironment(environment);
         var builder = new SqlConnectionStringBuilder(connectionString ?? env.GetString("connectionString"))

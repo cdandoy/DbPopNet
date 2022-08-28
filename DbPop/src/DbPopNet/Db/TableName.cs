@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace DbPop.DbPopNet.Database;
+namespace DbPop.DbPopNet.Db;
 
 public class TableName
 {
