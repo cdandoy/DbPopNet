@@ -53,4 +53,10 @@ public class LocalFileSystem : SimpleFileSystem
             .Select(fileSystemInfo => new LocalFileSystem(_directoryInfo, Path + "/" + fileSystemInfo.Name) as SimpleFileSystem)
             .ToList();
     }
+
+    public override TextReader TextReader()
+    {
+        return new FileInfo(_directoryInfo.FullName + "/" + TrimSlashes(Path))
+            .OpenText();
+    }
 }

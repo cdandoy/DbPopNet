@@ -16,13 +16,13 @@ public abstract class SimpleFileSystem
         return path;
     }
 
-    public abstract SimpleFileSystem Cd(string subPath);
-
-    public abstract List<SimpleFileSystem> List();
-
     public string Name()
     {
         var i = Path.LastIndexOf('/');
         return Path[(i + 1)..];
     }
+
+    public abstract SimpleFileSystem Cd(string subPath);
+    public abstract List<SimpleFileSystem> List();
+    public abstract TextReader TextReader();
 }

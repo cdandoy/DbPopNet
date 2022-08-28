@@ -3,7 +3,7 @@
 public abstract class ColumnType
 {
     public static readonly ColumnType Varchar = new VarcharColumnType();
-    
+
 /*
     public void bind(PreparedStatement preparedStatement, int jdbcPos, String input) throws SQLException {
         preparedStatement.setString(jdbcPos, input);
@@ -17,8 +17,10 @@ public abstract class ColumnType
         preparedStatement.setObject(jdbcPos, input);
     }
  */
+    public abstract object Value(string s);
 }
 
 internal class VarcharColumnType : ColumnType
 {
+    public override object Value(string s) => s;
 }

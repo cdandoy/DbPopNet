@@ -38,7 +38,7 @@ public class SqlServerDatabase : Database
         // TABLE_TYPE    String Type of table. Can be VIEW or BASE TABLE.
         var tableNames = new List<TableName>();
         Use(catalog);
-        
+
         var dataTable = Connection.GetSchema("Tables", new[] { catalog });
         foreach (DataRow row in dataTable.Rows)
         {
@@ -55,5 +55,53 @@ public class SqlServerDatabase : Database
     private void Use(string catalog)
     {
         new SqlCommand("USE " + catalog, Connection).ExecuteNonQuery();
+    }
+
+    public override IDatabasePreparationStrategy CreateDatabasePreparationStrategy(ICollection<Table> allTables) => new SqlServerDisablePreparationStrategy(this, allTables);
+
+    private void DisableForeignKey(ForeignKey foreignKey)
+    {
+        new SqlCommand(
+                $"ALTER TABLE ${Quote(foreignKey.FkTableName)} NOCHECK CONSTRAINT ${foreignKey.Name}",
+                Connection)
+            .ExecuteNonQuery();
+    }
+    private void EnableForeignKey(ForeignKey foreignKey)
+    {
+        new SqlCommand(
+                $"ALTER TABLE ${Quote(foreignKey.FkTableName)} WITH NOCHECK CHECK CONSTRAINT ${foreignKey.Name}",
+                Connection)
+            .ExecuteNonQuery();
+    }
+
+    private class SqlServerDisablePreparationStrategy : IDatabasePreparationStrategy
+    {
+        private readonly SqlServerDatabase _database;
+        private readonly ICollection<Table> _allTables;
+        private readonly ISet<ForeignKey> _foreignKeys;
+
+        public SqlServerDisablePreparationStrategy(SqlServerDatabase database, ICollection<Table> allTables)
+        {
+            _database = database;
+            _allTables = allTables;
+            _foreignKeys = allTables
+                .SelectMany(table => table.ForeignKeys)
+                .ToHashSet();
+        }
+
+        public void BeforeInserts()
+        {
+            foreach (var table in _allTables)
+                _database.DeleteTable(table);
+
+            foreach (var foreignKey in _foreignKeys)
+                _database.DisableForeignKey(foreignKey);
+        }
+
+        public void AfterInserts()
+        {
+            foreach (var foreignKey in _foreignKeys)
+                _database.EnableForeignKey(foreignKey);
+        }
     }
 }

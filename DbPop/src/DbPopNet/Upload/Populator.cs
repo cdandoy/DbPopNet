@@ -1,4 +1,7 @@
 ﻿using System.Collections.ObjectModel;
+using System.Globalization;
+using CsvHelper;
+using CsvHelper.Configuration;
 using DbPop.DbPopNet.Db;
 using DbPop.DbPopNet.Fs;
 
@@ -67,7 +70,7 @@ public sealed class Populator : IDisposable
         var missingTables = datasetTableNames
             .Where(tableName => !databaseTableNames.Contains(tableName))
             .ToList();
-        
+
         if (missingTables.Count > 0)
         {
             var badDataFile = allDatasets
@@ -122,6 +125,88 @@ public sealed class Populator : IDisposable
 
         return datasets;
     }
+
+    public int Load(params string[] datasets)
+    {
+        return Load(datasets.ToList());
+    }
+
+    public int Load(List<string> datasets)
+    {
+        var transaction = _database.GetConnection().BeginTransaction();
+        var rowCount = 0;
+        var loadedTables = LoadedTables(datasets);
+        var preparationStrategy = _database.CreateDatabasePreparationStrategy(_tablesByName.Values);
+        preparationStrategy.BeforeInserts();
+        try
+        {
+            foreach (var datasetName in datasets)
+            {
+                if (!_datasetsByName.ContainsKey(datasetName))
+                    throw new Exception($"Dataset not found : ${datasetName}");
+                var dataset = _datasetsByName[datasetName];
+                rowCount += LoadDataset(dataset);
+            }
+        }
+        finally
+        {
+            preparationStrategy.AfterInserts();
+        }
+
+        transaction.Commit();
+        return rowCount;
+    }
+
+    private int LoadDataset(Dataset dataset)
+    {
+        var rowCount = 0;
+        foreach (var dataFile in dataset.DataFiles())
+        {
+            rowCount += LoadDataFile(dataFile);
+        }
+
+        return rowCount;
+    }
+
+    private int LoadDataFile(DataFile dataFile)
+    {
+        var tableName = dataFile.TableName;
+        var table = _tablesByName[tableName];
+
+        var csvConfiguration = new CsvConfiguration(CultureInfo.InvariantCulture)
+        {
+            HasHeaderRecord = true
+        };
+        using var csvReader = new CsvReader(dataFile.TextReader(), csvConfiguration);
+        return InsertRows(table, csvReader);
+    }
+
+    private int InsertRows(Table table, CsvReader csvReader)
+    {
+        var headerNames = csvReader.HeaderRecord;
+        if (headerNames == null) return 0;
+        var dataFileHeaders = headerNames.Select(it => new DataFileHeader(it)).ToList();
+        using var databaseInserter = _database.CreateInserter(table, dataFileHeaders);
+        var count = 0;
+        while (csvReader.Read())
+        {
+            databaseInserter.Insert(csvReader);
+            count++;
+        }
+
+        return count;
+    }
+
+    private ISet<Table> LoadedTables(List<string> datasets)
+    {
+        return _datasetsByName.Values
+            .Where(it => datasets.Contains(it.Name()))
+            .Select(it => it.DataFiles())
+            .SelectMany(it => it)
+            .Where(it => _tablesByName.ContainsKey(it.TableName))
+            .Select(it => _tablesByName[it.TableName])
+            .ToHashSet();
+    }
 }
 
 internal class Dataset
@@ -149,4 +234,9 @@ internal class DataFile
 
     public SimpleFileSystem SimpleFileSystem { get; }
     public TableName TableName { get; }
+
+    public TextReader TextReader()
+    {
+        return SimpleFileSystem.TextReader();
+    }
 }
