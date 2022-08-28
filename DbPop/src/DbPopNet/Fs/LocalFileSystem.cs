@@ -2,6 +2,8 @@
 
 public class LocalFileSystem : SimpleFileSystem
 {
+    public const string DefaultDirectory = "Tests/resources/testdata";
+
     private readonly DirectoryInfo _directoryInfo;
 
     private LocalFileSystem(DirectoryInfo directoryInfo, string path) : base(path)
@@ -19,13 +21,18 @@ public class LocalFileSystem : SimpleFileSystem
         return new LocalFileSystem(FindRootDirectoryInfo(path), "");
     }
 
+    public static DirectoryInfo FindRootDirectoryInfo()
+    {
+        return FindRootDirectoryInfo(DefaultDirectory);
+    }
+
     private static DirectoryInfo FindRootDirectoryInfo(string path)
     {
         var currentDirectory = Directory.GetCurrentDirectory();
         var directoryInfo = new DirectoryInfo(currentDirectory);
         while (directoryInfo != null)
         {
-            var sub = new DirectoryInfo(directoryInfo.FullName + "/" +TrimSlashes(path));
+            var sub = new DirectoryInfo(directoryInfo.FullName + "/" + TrimSlashes(path));
             if (sub.Exists)
                 return sub;
             directoryInfo = directoryInfo.Parent;

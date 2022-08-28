@@ -9,7 +9,7 @@ public class PopulatorTest
     [Test]
     public void TestPopulator()
     {
-        var sfs = LocalFileSystem.FindFromCurrentDirectory("Tests/resources/testdata");
+        var sfs = LocalFileSystem.FindFromCurrentDirectory(LocalFileSystem.DefaultDirectory);
         var datasets = sfs.List();
         Assert(datasets.Count == 1);
         var baseDataset = datasets[0];
